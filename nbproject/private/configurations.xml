@@ -4,6 +4,7 @@
     <df root="." name="0">
       <df name="examples">
         <df name="charmap">
+          <in>charmap.ino</in>
         </df>
       </df>
       <in>CODERMONO.h</in>
