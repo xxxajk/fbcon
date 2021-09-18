@@ -16,28 +16,31 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 #endif
 
 class pixel : public fbcon_pixel {
-    // note, color is RGB565
-    void set(uint16_t x, uint16_t y, rgb2_t color) {
+        // note, color is RGB565
+
+        void set(uint16_t x, uint16_t y, rgb2_t color) {
 #if MONOCHROME
-      u8g2.setDrawColor(FB_to_monochrome(color));
-      u8g2.drawPixel(x, y);
+                u8g2.setDrawColor(FB_to_monochrome(color));
+                u8g2.drawPixel(x, y);
 #else
-      tft.drawPixel(x, y, FB_to_565(color));
+                tft.drawPixel(x, y, FB_to_565(color));
 #endif
-    }
-    void clear(uint16_t x, uint16_t y, rgb2_t color) {
+        }
+
+        void clear(uint16_t x, uint16_t y, rgb2_t color) {
 #if MONOCHROME
-      u8g2.setDrawColor(FB_to_monochrome(color));
-      u8g2.drawPixel(x, y);
+                u8g2.setDrawColor(FB_to_monochrome(color));
+                u8g2.drawPixel(x, y);
 #else
-      tft.drawPixel(x, y, FB_to_565(color));
+                tft.drawPixel(x, y, FB_to_565(color));
 #endif
-    }
-    void commit(void) {
+        }
+
+        void commit(void) {
 #if MONOCHROME
-      u8g2.sendBuffer();
+                u8g2.sendBuffer();
 #endif
-    }
+        }
 
 };
 
@@ -47,50 +50,50 @@ uint16_t dispx;
 uint16_t dispy;
 
 void zzz(uint16_t p, uint16_t w, uint16_t q) {
-  for (uint16_t i = p; i < p + w; i++) {
-    console.FBset((i - p) * 2, q, i);
-  }
-  console.updateFB();
+        for(uint16_t i = p; i < p + w; i++) {
+                console.FBset((i - p) * 2, q, i);
+        }
+        console.updateFB();
 }
 
 void setup() {
-  while (!Serial) {
-    yield();
-  }
-  Serial.begin(115200);
+        while(!Serial) {
+                yield();
+        }
+        Serial.begin(115200);
 
 #if MONOCHROME
-  u8g2.setBusClock(30000000);
-  u8g2.begin();
-  u8g2.clear_total();
-  console.begin(u8g2.width(), u8g2.height(), &pixel);
+        u8g2.setBusClock(30000000);
+        u8g2.begin();
+        u8g2.clear_total();
+        console.begin(u8g2.width(), u8g2.height(), &pixel);
 #else
-  // init TFT. Need to get parallel going, as blitting on SPI is horribly slow.
-  tft.begin();
-  tft.setClock(30000000);
-  tft.setRotation(3);
-  tft.fillScreen(ILI9341_GREEN);
-  console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
+        // init TFT. Need to get parallel going, as blitting on SPI is horribly slow.
+        tft.begin();
+        tft.setClock(30000000);
+        tft.setRotation(3);
+        tft.fillScreen(ILI9341_GREEN);
+        console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
 #endif
-  dispx = console.width();
-  dispy = console.height();
+        dispx = console.width();
+        dispy = console.height();
 
-  Serial.println(dispx);
-  Serial.println(dispy);
+        Serial.println(dispx);
+        Serial.println(dispy);
 
-  uint16_t wide = (dispx / 2) & 0x1ff0U;
-  uint16_t tall = (dispy / 2);
-  uint16_t sweep = wide * tall;
-  while (1) {
+        uint16_t wide = (dispx / 2) & 0x1ff0U;
+        uint16_t tall = (dispy / 2);
+        uint16_t sweep = wide * tall;
+        while(1) {
 
-    for (uint16_t i = 0; i < 0x03ffU; i += sweep) {
-      console.FBclear();
-      for (uint16_t j = 0; j < tall; j ++) {
-        zzz(i + (wide * j), wide, j*2);
-      }
-      delay(2000);
-    }
-  }
+                for(uint16_t i = 0; i < 0x03ffU; i += sweep) {
+                        console.FBclear();
+                        for(uint16_t j = 0; j < tall; j++) {
+                                zzz(i + (wide * j), wide, j * 2);
+                        }
+                        delay(2000);
+                }
+        }
 }
 
 void loop() {
