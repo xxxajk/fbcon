@@ -297,9 +297,9 @@ uint8_t FB_to_monochrome(rgb2_t color) {
 }
 
 // RGB222 -> RGB565 LUTs
-static const uint16_t FB_lt222_xx5[4] = {0x0000U, 0x0007U, 0x001CU, 0x001FU}; // B
-static const uint16_t FB_lt222_x6x[4] = {0x0000U, 0x00E0U, 0x0700U, 0x07E0U}; // G
-static const uint16_t FB_lt222_5xx[4] = {0x0000U, 0x3800U, 0xC000U, 0xF800U}; // R
+static const uint16_t FB_lt222_xx5[4] = {0x0000U, 0x0010U, 0x0018U, 0x001FU}; // B
+static const uint16_t FB_lt222_x6x[4] = {0x0000U, 0x0400U, 0x0600U, 0x07C0U}; // G
+static const uint16_t FB_lt222_5xx[4] = {0x0000U, 0x8000U, 0xC000U, 0xF800U}; // R
 // RGB222 -> RGB565
 
 uint16_t FB_to_565(rgb2_t color) {
