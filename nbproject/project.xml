@@ -24,6 +24,7 @@
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
             <word>Arduino</word>
+            <word>rubout</word>
         </spellchecker-wordlist>
     </configuration>
 </project>

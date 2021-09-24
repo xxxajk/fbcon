@@ -1,24 +1,36 @@
 #include <Arduino.h>
 
 #define MONOCHROME 0
+#define USESPI 0
+#define EIGHTBITS 1
 
 #include <fbcon.h>
+
+
+#if USESPI
 #if MONOCHROME
 #include <SPI.h>
 #include <U8g2lib.h>
 U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, 15, 5, 4);
 #else
+
 #include <SPI.h>
 #include <ILI9341_t3.h>
 const uint8_t TFT_DC = 9;
 const uint8_t TFT_CS = 10;
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 #endif
+#else
+// parallel
+#include <ILI9341-8-bit_teensy.h>
+ILI9341_TFT tft;
+#endif
+
 
 class pixel : public fbcon_pixel {
         // note, color is RGB565
 
-        void set(uint16_t x, uint16_t y, rgb2_t color) {
+        void set(uint16_t x, uint16_t y, rgb222_t color) {
 #if MONOCHROME
                 u8g2.setDrawColor(FB_to_monochrome(color));
                 u8g2.drawPixel(x, y);
@@ -27,7 +39,7 @@ class pixel : public fbcon_pixel {
 #endif
         }
 
-        void clear(uint16_t x, uint16_t y, rgb2_t color) {
+        void clear(uint16_t x, uint16_t y, rgb222_t color) {
 #if MONOCHROME
                 u8g2.setDrawColor(FB_to_monochrome(color));
                 u8g2.drawPixel(x, y);
@@ -62,15 +74,21 @@ void setup() {
         }
         Serial.begin(115200);
 
+#if USESPI
 #if MONOCHROME
         u8g2.setBusClock(30000000);
         u8g2.begin();
         u8g2.clear_total();
         console.begin(u8g2.width(), u8g2.height(), &pixel);
 #else
-        // init TFT. Need to get parallel going, as blitting on SPI is horribly slow.
         tft.begin();
         tft.setClock(30000000);
+        tft.setRotation(3);
+        tft.fillScreen(ILI9341_GREEN);
+        console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
+#endif
+#else
+        tft.begin();
         tft.setRotation(3);
         tft.fillScreen(ILI9341_GREEN);
         console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation

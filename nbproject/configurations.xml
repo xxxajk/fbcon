@@ -42,6 +42,9 @@
           <cTool>
             <incDir>
               <pElem>../../../Arduino/libraries/IntervalClassTimer2</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/ILI9341_t3</pElem>
+              <pElem>../../../Arduino/libraries/ILI9341-8-bit_teensy</pElem>
             </incDir>
           </cTool>
           <ccTool>
@@ -49,6 +52,7 @@
               <pElem>../../../Arduino/libraries/IntervalClassTimer2</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/ILI9341_t3</pElem>
+              <pElem>../../../Arduino/libraries/ILI9341-8-bit_teensy</pElem>
             </incDir>
           </ccTool>
         </makeTool>

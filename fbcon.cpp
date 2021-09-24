@@ -7,7 +7,7 @@
 
 #include "fbcon.h"
 
-void fbcon::drawbyte(uint16_t x, uint16_t y, uint8_t b, rgb2_t fg) {
+void fbcon::drawbyte(uint16_t x, uint16_t y, uint8_t b, rgb222_t fg) {
         for(uint8_t bit = 0, mask = 0x80U; bit < 8; bit++, mask >>= 1) {
                 if((b & mask)) {
                         pixel->set(x + bit, y, fg);
@@ -20,7 +20,7 @@ void fbcon::drawbyte(uint16_t x, uint16_t y, uint8_t b, rgb2_t fg) {
 void fbcon::drawSymbol(uint16_t x, uint16_t y, charcell_t s) {
         if(x >= _sizeX) return;
         if(y >= _sizeY) return;
-        rgb2_t fg;
+        rgb222_t fg;
         fg.color = s.color;
         bool f = s.flash && state;
         bool i = s.inverse != f;
@@ -36,7 +36,7 @@ void fbcon::drawSymbol(uint16_t x, uint16_t y, charcell_t s) {
 void fbcon::updateFB(void) {
         it.pause();
         user = true;
-        CISR(); // unpauses for us...
+        CISR(); // This resumes for us
 }
 
 void fbcon::FBset(uint16_t x, uint16_t y, uint16_t s) {
@@ -46,13 +46,13 @@ void fbcon::FBset(uint16_t x, uint16_t y, uint16_t s) {
         noInterrupts();
         charcell_t *p = FBcon + (x + (y * _sizeX));
         p->cell = s /* | FGcolor.color << 10 */;
-        p->color = FGcolor.color;
+        p->color = FGcolor.color._color;
         interrupts();
 }
 
 // to clear the display, we fill it with the space symbol, which is at 0x20 | color, also sets bg color
 
-void fbcon::FBclear(rgb2_t color, rgb2_t bg) {
+void fbcon::FBclear(rgb222_t color, rgb222_t bg) {
         FGcolor.color = color.color;
         BGcolor.color = bg.color;
         for(uint16_t y = 0; y < _sizeY; y++) {
@@ -72,34 +72,105 @@ void fbcon::scroll(void) {
         updateFB();
 }
 
+void fbcon::setprcol(void) {
+        switch(prcol) {
+                case 0x00:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_8);
+                        } else {
+                                FBfgcolor(FB_COLOR_0);
+                        }
+                        break;
+                case 0x01:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_9);
+                        } else {
+                                FBfgcolor(FB_COLOR_1);
+                        }
+                        break;
+                case 0x02:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_A);
+                        } else {
+                                FBfgcolor(FB_COLOR_2);
+                        }
+                        break;
+                case 0x03:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_B);
+                        } else {
+                                FBfgcolor(FB_COLOR_3);
+                        }
+                        break;
+                case 0x04:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_C);
+                        } else {
+                                FBfgcolor(FB_COLOR_4);
+                        }
+                        break;
+                case 0x05:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_D);
+                        } else {
+                                FBfgcolor(FB_COLOR_5);
+                        }
+                        break;
+                case 0x06:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_E);
+                        } else {
+                                FBfgcolor(FB_COLOR_6);
+                        }
+                        break;
+                case 0x07:
+                        if(bold) {
+                                FBfgcolor(FB_COLOR_F);
+                        } else {
+                                FBfgcolor(FB_COLOR_7);
+                        }
+                        break;
+                default:
+                        // huh??
+                        break;
+        }
+}
+
 size_t fbcon::write(uint8_t c) {
         if(!diag) {
                 switch(c) {
-                        case 0x00: // ^@
+                        case 0x00: // ^@ \0
                                 break;
                         case 0x01: // ^A home
                                 pX = 0;
                                 pY = 0;
                                 break;
-                        case 0x02: // ^B
+                        case 0x02: // ^B bold on
+                                bold = true;
+                                setprcol();
                                 break;
-                        case 0x03: // ^C
+                        case 0x03: // ^C bold and inverse and flash off
+                                bold = false;
+                                FBinverse(false);
+                                FBflash(false);
+                                setprcol();
                                 break;
-                        case 0x04: // ^D
+                        case 0x04: // ^D bold off
+                                bold = false;
+                                setprcol();
                                 break;
-                        case 0x05: // ^E
+                        case 0x05: // ^E flash on
+                                FBflash(true);
                                 break;
-                        case 0x06: // ^F RIGHT
-                                if(pX < _sizeX - 1) {
-                                        pX++;
-                                }
+                        case 0x06: // ^F flash off
+                                FBflash(false);
                                 break;
-                        case 0x07: // ^G /a
+                        case 0x07: // ^G \a
                                 if(alert) {
                                         alert->alert();
                                 }
                                 break;
-                        case 0x08: // ^H /b
+                        case 0x08: // ^H \b -- note backspace != left
                                 if(pX > 0) {
                                         pX--;
                                 } else {
@@ -109,7 +180,7 @@ size_t fbcon::write(uint8_t c) {
                                         }
                                 }
                                 break;
-                        case 0x09: // ^I /t TAB
+                        case 0x09: // ^I \t TAB
                                 pX = (pX & ~0x07) + 8;
                                 if(pX >= _sizeX) {
                                         pX = 0;
@@ -120,64 +191,90 @@ size_t fbcon::write(uint8_t c) {
                                         }
                                 }
                                 break;
-                        case 0x0a: // ^J /n DOWN
+                        case 0x0a: // ^J \n DOWN with advance
                                 if(pY == _sizeY - 1) {
                                         scroll();
                                 } else {
                                         pY++;
                                 }
                                 break;
-                        case 0x0b: // ^K
+                        case 0x0b: // ^K \v
                                 break;
-                        case 0x0c: // ^L CLEAR/HOME
+                        case 0x0c: // ^L \f CLEAR/HOME
                                 pX = 0;
                                 pY = 0;
                                 FBclear(FGcolor, BGcolor);
                                 break;
-                        case 0x0d: // ^M /r
+                        case 0x0d: // ^M \r
                                 pX = 0;
                                 break;
-                        case 0x0e: // ^N
+                        case 0x0e: // ^N 0 black
+                                prcol = 0;
+                                setprcol();
                                 break;
-                        case 0x0f: // ^O
+                        case 0x0f: // ^O 1 red
+                                prcol = 1;
+                                setprcol();
                                 break;
-                        case 0x10: // ^P
+                        case 0x10: // ^P 2 green
+                                prcol = 2;
+                                setprcol();
                                 break;
-                        case 0x11: // ^Q
+                        case 0x11: // ^Q 3 yellow
+                                prcol = 3;
+                                setprcol();
                                 break;
-                        case 0x12: // ^R
+                        case 0x12: // ^R 4 blue
+                                prcol = 4;
+                                setprcol();
                                 break;
-                        case 0x13: // ^S
+                        case 0x13: // ^S 5 violet
+                                prcol = 5;
+                                setprcol();
                                 break;
-                        case 0x14: // ^T
+                        case 0x14: // ^T 6 cyan
+                                prcol = 6;
+                                setprcol();
                                 break;
-                        case 0x15: // ^U LEFT
-                                if(pX > 0) {
-                                        pX--;
+                        case 0x15: // ^U 7 white
+                                prcol = 7;
+                                setprcol();
+                                break;
+                        case 0x16: // ^V RIGHT
+                                if(pX < _sizeX - 1) {
+                                        pX++;
                                 }
                                 break;
-                        case 0x16: // ^V
-                                break;
-                        case 0x17: // ^W
-                                break;
-                        case 0x18: // ^X
-                                break;
-                        case 0x19: // ^Y
-                                break;
-                        case 0x1a: // ^Z UP
+                        case 0x17: // ^W UP
                                 if(pY > 0) {
                                         pY--;
+                                }
+                                break;
+                        case 0x18: // ^X DOWN
+                                if(pY < _sizeY - 1) {
+                                        pY++;
+                                }
+                                break;
+                        case 0x19: // ^Y cursor on
+                                cursor(true);
+                                break;
+                        case 0x1a: // ^Z LEFT
+                                if(pX > 0) {
+                                        pX--;
                                 }
                                 break;
                         case 0x1b: // ^[
                                 break;
                         case 0x1c: // ^BACKSLASH
                                 break;
-                        case 0x1d: // ^]
+                        case 0x1d: // ^] cursor off
+                                cursor(false);
                                 break;
-                        case 0x1e: // ^^
+                        case 0x1e: // ^^ inverse on
+                                FBinverse(true);
                                 break;
-                        case 0x1f: // ^_
+                        case 0x1f: // ^_ inverse off
+                                FBinverse(false);
                                 break;
                         default:
                                 // emit it as-is, and only advance line if we go beyond
@@ -259,6 +356,8 @@ void fbcon::begin(uint16_t x, uint16_t y, fbcon_pixel *_pixel, fbcon_alert *_ale
                 _posY = 0;
                 pX = 0;
                 pY = 0;
+                prcol = 7;
+                bold = false;
                 flash = false;
                 state = false;
                 user = false;
@@ -270,30 +369,30 @@ void fbcon::begin(uint16_t x, uint16_t y, fbcon_pixel *_pixel, fbcon_alert *_ale
                 _sizeB = _sizeY * _sizeX;
                 FBcon = new charcell_t[_sizeB];
                 FBcpy = new charcell_t[_sizeB];
-                FGcolor.color = FB_WHITE.color;
-                BGcolor.color = FB_BLACK.color;
+                FGcolor.color = FB_COLOR_7.color;
+                BGcolor.color = FB_COLOR_0.color;
 
                 // init frame buffers;
                 charcell_t *p = FBcon;
                 charcell_t *q = FBcpy;
                 for(int i = 0; i < _sizeB; i++, p++, q++) {
-                        p->cell = 0x007FU | FB_WHITE.color << 10;
-                        q->cell = 0x0001U | FB_WHITE.color << 10;
+                        p->cell = 0x007FU | FB_COLOR_F.color._color << 10;
+                        q->cell = 0x0001U | FB_COLOR_F.color._color << 10;
                 }
-                it.priority(255); // use lowest priority, allow more important events to happen
+                it.priority(224); // use a modest priority, allow more important events to happen
                 it.begin(this, 500000UL);
                 updateFB();
-                FBclear(FB_WHITE, FB_BLACK); // clear display
+                FBclear(FB_COLOR_7, FB_COLOR_0); // clear display
                 initted = true;
         }
 }
 
 // RGB222 -> monochrome
 
-uint8_t FB_to_monochrome(rgb2_t color) {
+uint8_t FB_to_monochrome(rgb222_t color) {
         // NOTE: the "color" is reversed on back-lit/reflective LCD,
         //       but is correct for LED displays.
-        return (color.color) ? 1 : 0;
+        return (color.color._color) ? 1 : 0;
 }
 
 // RGB222 -> RGB565 LUTs
@@ -302,6 +401,6 @@ static const uint16_t FB_lt222_x6x[4] = {0x0000U, 0x0400U, 0x0600U, 0x07C0U}; //
 static const uint16_t FB_lt222_5xx[4] = {0x0000U, 0x8000U, 0xC000U, 0xF800U}; // R
 // RGB222 -> RGB565
 
-uint16_t FB_to_565(rgb2_t color) {
-        return (FB_lt222_5xx[color.r] | FB_lt222_x6x[color.g] | FB_lt222_xx5[color.b]);
+uint16_t FB_to_565(rgb222_t color) {
+        return (FB_lt222_5xx[color.color.r] | FB_lt222_x6x[color.color.g] | FB_lt222_xx5[color.color.b]);
 }
