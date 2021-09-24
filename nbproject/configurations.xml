@@ -6,6 +6,9 @@
         <df name="charmap">
           <in>charmap.ino</in>
         </df>
+        <df name="console_test">
+          <in>console_test.ino</in>
+        </df>
       </df>
       <in>fbcon.cpp</in>
       <in>fbcon.h</in>
@@ -62,6 +65,11 @@
         </preBuild>
       </makefileType>
       <item path="examples/charmap/charmap.ino" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="examples/console_test/console_test.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="fbcon.cpp" ex="false" tool="1" flavor2="0">
       </item>

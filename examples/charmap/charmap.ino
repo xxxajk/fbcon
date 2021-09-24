@@ -1,9 +1,8 @@
-#include <Arduino.h>
-
 #define MONOCHROME 0
 #define USESPI 0
 #define EIGHTBITS 1
 
+#include <Arduino.h>
 #include <fbcon.h>
 
 
@@ -25,7 +24,6 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 #include <ILI9341-8-bit_teensy.h>
 ILI9341_TFT tft;
 #endif
-
 
 class pixel : public fbcon_pixel {
         // note, color is RGB565
@@ -68,12 +66,7 @@ void zzz(uint16_t p, uint16_t w, uint16_t q) {
         console.updateFB();
 }
 
-void setup() {
-        while(!Serial) {
-                yield();
-        }
-        Serial.begin(115200);
-
+void console_setup(void) {
 #if USESPI
 #if MONOCHROME
         u8g2.setBusClock(30000000);
@@ -93,6 +86,16 @@ void setup() {
         tft.fillScreen(ILI9341_GREEN);
         console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
 #endif
+
+}
+
+void setup() {
+        while(!Serial) {
+                yield();
+        }
+        Serial.begin(115200);
+        console_setup();
+
         dispx = console.width();
         dispy = console.height();
 

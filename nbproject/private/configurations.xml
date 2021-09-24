@@ -6,6 +6,9 @@
         <df name="charmap">
           <in>charmap.ino</in>
         </df>
+        <df name="console_test">
+          <in>console_test.ino</in>
+        </df>
       </df>
       <in>CODERMONO.h</in>
       <in>fbcon.cpp</in>
