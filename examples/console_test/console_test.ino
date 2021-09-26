@@ -64,7 +64,7 @@ void console_setup(void) {
         u8g2.setBusClock(30000000);
         u8g2.begin();
         u8g2.clear_total();
-        console.begin(u8g2.width(), u8g2.height(), &pixel);
+        console.begin(u8g2.width(), u8g2.height(), &_pixel);
 #else
         tft.begin();
         tft.setClock(30000000);
