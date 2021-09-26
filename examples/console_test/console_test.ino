@@ -9,7 +9,7 @@
 #if MONOCHROME
 #include <SPI.h>
 #include <U8g2lib.h>
-U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, 15, 5, 4);
+U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, 15, 4, 5);
 #else
 
 #include <SPI.h>
@@ -64,7 +64,7 @@ void console_setup(void) {
         u8g2.setBusClock(30000000);
         u8g2.begin();
         u8g2.clear_total();
-        console.begin(u8g2.width(), u8g2.height(), &_pixel);
+        console.begin(tft.getDisplayWidth(), tft.getDisplayHeight(), &_pixel);
 #else
         tft.begin();
         tft.setClock(30000000);

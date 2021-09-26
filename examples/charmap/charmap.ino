@@ -10,7 +10,7 @@
 #if MONOCHROME
 #include <SPI.h>
 #include <U8g2lib.h>
-U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, 15, 5, 4);
+U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, 15, 4, 5);
 #else
 
 #include <SPI.h>
@@ -78,7 +78,7 @@ void console_setup(void) {
         tft.setClock(30000000);
         tft.setRotation(3);
         tft.fillScreen(ILI9341_GREEN);
-        console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
+        console.begin(tft.getDisplayWidth(), tft.getDisplayHeight(), &_pixel); // x and y are swapped because of rotation
 #endif
 #else
         tft.begin();
