@@ -1,9 +1,11 @@
 #define MONOCHROME 0
 #define USESPI 0
-#define EIGHTBITS 1
+#define EIGHTBITS 0
+#define EIGHTBITS16BITSIGNALS 0
 
 #include <Arduino.h>
 #include <fbcon.h>
+
 
 #if USESPI
 #if MONOCHROME
@@ -20,12 +22,19 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 #endif
 #else
 // parallel
-#include <ILI9341-8-bit_teensy.h>
-ILI9341_TFT tft;
+#include <ILI9341-816-bit_teensy.h>
+#if EIGHTBITS
+#if EIGHTBITS16BITSIGNALS
+ILI9341_TFT tft(false, TFT_RST_16, TFT_BACKLIGHT_16);
+#else
+ILI9341_TFT tft(false);
+#endif
+#else
+ILI9341_TFT tft(true);
+#endif
 #endif
 
 class pixel : public fbcon_pixel {
-        // note, color is RGB565
 
         void set(uint16_t x, uint16_t y, rgb222_t color) {
 #if MONOCHROME
@@ -63,8 +72,8 @@ void console_setup(void) {
 #if MONOCHROME
         u8g2.setBusClock(30000000);
         u8g2.begin();
-        u8g2.clear_total();
-        console.begin(tft.getDisplayWidth(), tft.getDisplayHeight(), &_pixel);
+        u8g2.clear();
+        console.begin(u8g2.getDisplayWidth(), u8g2.getDisplayHeight(), &_pixel);
 #else
         tft.begin();
         tft.setClock(30000000);
@@ -131,15 +140,16 @@ void setup() {
         }
 
         for(int i = 0; i < 8; i++) {
-                console.print("\x01\n");
+                console.print("\001\n");
                 for(int j = 0; j < i; j++) {
-                        console.print("\x16");
+                        console.print("\026");
                 }
                 console.print(" ");
-                console.print("\x0f\x02\x05Looks good!\x03");
+                console.print("\017\002\005Looks good!\003");
                 delay(501);
         }
         console.println();
+#if !MONOCHROME
         // direct color setting
         dispcolor("FB_RED1", FB_RED1);
         dispcolor("FB_RED2", FB_RED2);
@@ -151,22 +161,23 @@ void setup() {
         dispcolor("FB_BLUE2", FB_BLUE2);
         dispcolor("FB_BLUE3", FB_BLUE3);
         // and via print
-        console.println("\x1e\x0f \x15\003 FB_COLOR_1");
-        console.println("\x1e\x10 \x15\003 FB_COLOR_2");
-        console.println("\x1e\x11 \x15\003 FB_COLOR_3");
-        console.println("\x1e\x12 \x15\003 FB_COLOR_4");
-        console.println("\x1e\x13 \x15\003 FB_COLOR_5");
-        console.println("\x1e\x14 \x15\003 FB_COLOR_6");
-        console.println("\x1e\x15 \x15\003 FB_COLOR_7");
+        console.println("\036\017 \025\003 FB_COLOR_1");
+        console.println("\036\020 \025\003 FB_COLOR_2");
+        console.println("\036\021 \025\003 FB_COLOR_3");
+        console.println("\036\022 \025\003 FB_COLOR_4");
+        console.println("\036\023 \025\003 FB_COLOR_5");
+        console.println("\036\024 \025\003 FB_COLOR_6");
+        console.println("\036\025 \025\003 FB_COLOR_7");
 
-        console.println("\x1e\x0e\002 \x15\003 FB_COLOR_8 (AKA BOLD 0)");
-        console.println("\x1e\x0f\002 \x15\003 FB_COLOR_9 (AKA BOLD 1)");
-        console.println("\x1e\x10\002 \x15\003 FB_COLOR_A (AKA BOLD 2)");
-        console.println("\x1e\x11\002 \x15\003 FB_COLOR_B (AKA BOLD 3)");
-        console.println("\x1e\x12\002 \x15\003 FB_COLOR_C (AKA BOLD 4)");
-        console.println("\x1e\x13\002 \x15\003 FB_COLOR_D (AKA BOLD 5)");
-        console.println("\x1e\x14\002 \x15\003 FB_COLOR_E (AKA BOLD 6)");
-        console.println("\x1e\x15\002 \x15\003 FB_COLOR_F (AKA BOLD 7)");
+        console.println("\036\016\002 \025\003 FB_COLOR_8 (AKA BOLD 0)");
+        console.println("\036\017\002 \025\003 FB_COLOR_9 (AKA BOLD 1)");
+        console.println("\036\020\002 \025\003 FB_COLOR_A (AKA BOLD 2)");
+        console.println("\036\021\002 \025\003 FB_COLOR_B (AKA BOLD 3)");
+        console.println("\036\022\002 \025\003 FB_COLOR_C (AKA BOLD 4)");
+        console.println("\036\023\002 \025\003 FB_COLOR_D (AKA BOLD 5)");
+        console.println("\036\024\002 \025\003 FB_COLOR_E (AKA BOLD 6)");
+        console.println("\036\025\002 \025\003 FB_COLOR_F (AKA BOLD 7)");
+#endif
 }
 
 void loop() {

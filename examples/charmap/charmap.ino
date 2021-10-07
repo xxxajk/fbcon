@@ -1,6 +1,8 @@
 #define MONOCHROME 0
 #define USESPI 0
-#define EIGHTBITS 1
+#define EIGHTBITS 0
+#define EIGHTBITS16BITSIGNALS 0
+
 
 #include <Arduino.h>
 #include <fbcon.h>
@@ -21,12 +23,19 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 #endif
 #else
 // parallel
-#include <ILI9341-8-bit_teensy.h>
-ILI9341_TFT tft;
+#include <ILI9341-816-bit_teensy.h>
+#if EIGHTBITS
+#if EIGHTBITS16BITSIGNALS
+ILI9341_TFT tft(false, TFT_RST_16, TFT_BACKLIGHT_16);
+#else
+ILI9341_TFT tft(false);
+#endif
+#else
+ILI9341_TFT tft(true);
+#endif
 #endif
 
 class pixel : public fbcon_pixel {
-        // note, color is RGB565
 
         void set(uint16_t x, uint16_t y, rgb222_t color) {
 #if MONOCHROME
@@ -71,14 +80,14 @@ void console_setup(void) {
 #if MONOCHROME
         u8g2.setBusClock(30000000);
         u8g2.begin();
-        u8g2.clear_total();
-        console.begin(u8g2.width(), u8g2.height(), &pixel);
+        u8g2.clear();
+        console.begin(u8g2.getDisplayWidth(), u8g2.getDisplayHeight(), &_pixel);
 #else
         tft.begin();
         tft.setClock(30000000);
         tft.setRotation(3);
         tft.fillScreen(ILI9341_GREEN);
-        console.begin(tft.getDisplayWidth(), tft.getDisplayHeight(), &_pixel); // x and y are swapped because of rotation
+        console.begin(tft.width(), tft.height(), &_pixel); // x and y are swapped because of rotation
 #endif
 #else
         tft.begin();
