@@ -289,6 +289,7 @@ size_t fbcon::write(uint8_t c) {
                                                 scroll();
                                         }
                                         FBset(pX, pY, ch);
+                                        pX++;
                                 } else {
                                         FBset(pX, pY, ch);
                                         pX++;
